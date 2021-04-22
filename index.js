@@ -1,29 +1,45 @@
-const { Botkit } = require('botkit');
-const { SlackAdapter, SlackEventMiddleware } = require('botbuilder-adapter-slack');
-require('dotenv').config();
+const { App } = require('@slack/bolt');
+
+// Initializes your app with your bot token and signing secret
+const app = new App({
+  token: process.env.SLACK_BOT_TOKEN,
+  signingSecret: process.env.SLACK_SIGNING_SECRET
+});
+
+// Listens to incoming messages that contain "hello"
+app.message('hello', async ({ message, say }) => {
+  // say() sends a message to the channel where the event was triggered
+  await say({
+    blocks: [
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": `Hey there <@${message.user}>!`
+        },
+        "accessory": {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Click Me"
+          },
+          "action_id": "button_click"
+        }
+      }
+    ],
+    text: `Hey there <@${message.user}>!`
+  });
+});
+
+app.action('button_click', async ({ body, ack, say }) => {
+  // Acknowledge the action
+  await ack();
+  await say(`<@${body.user.id}> clicked the button`);
+});
 
 (async () => {
-  const adapter = new SlackAdapter({
-    clientSigningSecret: process.env.BOT_SECRET,
-    botToken: process.env.BOT_TOKEN
-  });
+  // Start your app
+  await app.start(process.env.PORT || 3000);
 
-  adapter.use(new SlackEventMiddleware())
-
-  const controller = new Botkit({
-    webhook_uri: '/api/messages',
-    adapter: adapter
-  });
-
-  controller.on('message', async(bot, message) => {
-    await bot.reply(message, 'Hey');
-  });
-
-  controller.ready(() => {
-    controller.loadModules(__dirname + '/features');
-  });
-
-  controller.webserver.get('/', (req, res) => {
-    res.send(`This app is running Botkit ${ controller.version }.`);
-  });
+  console.log('⚡️ Bolt app is running!');
 })();
