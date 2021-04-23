@@ -144,6 +144,8 @@ app.message(/(:pizza:).*/, async ({ message, say }) => {
             }
           }]
         });
+
+        throw new Error("Oops, that's not how you send pizzas :face_palm:! Do something like `@user :pizza:` instead!");
       } else {
        pizzaUsersObjectArray[counter].pizzas++;
       }
@@ -155,11 +157,12 @@ app.message(/(:pizza:).*/, async ({ message, say }) => {
     const collection = await mongo(mongoOptions);
     const ops = [];
     const userSet = new Set();
+    userSet.add(message.user);
 
     pizzaUsersObjectArray.forEach(pizzaUserObj => {
       pizzaUserObj.recipients.forEach(recipient => {
-        ops.push(takePizzaOp(message.user, pizzaUserObj.pizzas));
         userSet.add(recipient);
+        ops.push(takePizzaOp(message.user, pizzaUserObj.pizzas));
         ops.push(givePizzaOp(recipient, pizzaUserObj.pizzas));
       }); 
     });
@@ -216,6 +219,7 @@ app.message(/(:pizzapie:).*/, async ({ message, say }) => {
     const collection = await mongo(mongoOptions);
     const ops = [];
     const userSet = new Set();
+    userSet.add(message.user);
 
     pizzapieUsersObjectArray.forEach(pizzapieUserObj => {
       pizzapieUserObj.recipients.forEach(recipient => {
