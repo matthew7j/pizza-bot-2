@@ -115,8 +115,10 @@ app.message(/(:pizza:).*/, async ({ message, say }) => {
     pizzas: 0,
     recipients: []
   }];
+  let totalPizzas = 0;
 
-  splitMessage.forEach(msg => {
+  for (let i = 0; i < splitMessage.length; i++) {
+    const msg = splitMessage[i];
     if (isUser(msg)) {
       if (counter < 0) {
         counter = 0;
@@ -130,9 +132,9 @@ app.message(/(:pizza:).*/, async ({ message, say }) => {
         pizzaUsersObjectArray.push(newPizzaUserObject);
       }
       pizzaUsersObjectArray[counter].recipients.push(msg.substring(2, msg.length - 1));
-    } else if (msg === ':pizza:') {
+    } else if (msg === ':pizza:' || msg === ':pizzapie:') {
       if (counter < 0) {
-        app.client.chat.postEphemeral({
+        await app.client.chat.postEphemeral({
           token: process.env.SLACK_BOT_TOKEN,
           user: message.user,
           channel: message.channel,
@@ -145,12 +147,14 @@ app.message(/(:pizza:).*/, async ({ message, say }) => {
           }]
         });
 
-        throw new Error("Oops, that's not how you send pizzas :face_palm:! Do something like `@user :pizza:` instead!");
+        return;
       } else {
-       pizzaUsersObjectArray[counter].pizzas++;
+        pizzaUsersObjectArray[counter].pizzas++;
+        const multiplier = pizzaUsersObjectArray[counter].recipients.length;
+        totalPizzas += multiplier;
       }
     }
-  });
+  }
 
   if (pizzaUsersObjectArray.length > 0 && pizzaUsersObjectArray[0].recipients.length > 0) {
     const mongoOptions = { db: 'pizza_bot', collection: 'users' };
@@ -167,8 +171,25 @@ app.message(/(:pizza:).*/, async ({ message, say }) => {
       }); 
     });
 
-    await collection.bulkWrite(ops);
-    await sendMessageToPizzaPeople(pizzaUsersObjectArray, userSet, message);
+    const userPizzaInfo = await collection.findOne({ userId: message.user });
+
+    if (userPizzaInfo.pizzas - totalPizzas < 0) {
+      await app.client.chat.postEphemeral({
+        token: process.env.SLACK_BOT_TOKEN,
+        user: message.user,
+        channel: message.channel,
+        blocks: [{
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `Oops, you do not have enough pizzas for this. You tried giving ${totalPizzas} pizzas but you only have ${userPizzaInfo.pizzas}!`
+          }
+        }]
+      });
+    } else {
+      await collection.bulkWrite(ops);
+      await sendMessageToPizzaPeople(pizzaUsersObjectArray, userSet, message);
+    }
   }
 });
 
@@ -179,6 +200,7 @@ app.message(/(:pizzapie:).*/, async ({ message, say }) => {
     pizzas: 0,
     recipients: []
   }];
+  let totalPizzas = 0;
 
   splitMessage.forEach(msg => {
     if (isUser(msg)) {
@@ -194,7 +216,7 @@ app.message(/(:pizzapie:).*/, async ({ message, say }) => {
         pizzapieUsersObjectArray.push(newPizzaPieUserObject);
       }
       pizzapieUsersObjectArray[counter].recipients.push(msg.substring(2, msg.length - 1));
-    } else if (msg === ':pizzapie:') {
+    } else if (msg === ':pizzapie:' || msg === ':pizza') {
       if (counter < 0) {
         app.client.chat.postEphemeral({
           token: process.env.SLACK_BOT_TOKEN,
@@ -209,7 +231,9 @@ app.message(/(:pizzapie:).*/, async ({ message, say }) => {
           }]
         });
       } else {
-       pizzapieUsersObjectArray[counter].pizzas += 8;
+        pizzapieUsersObjectArray[counter].pizzas += 8;
+        const multiplier = pizzapieUsersObjectArray[counter].recipients.length;
+        totalPizzas += (multiplier * 8);
       }
     }
   });
@@ -229,8 +253,26 @@ app.message(/(:pizzapie:).*/, async ({ message, say }) => {
       }); 
     });
 
-    await collection.bulkWrite(ops);
-    await sendMessageToPizzaPeople(pizzapieUsersObjectArray, userSet, message);
+    const userPizzaInfo = await collection.findOne({ userId: message.user });
+    console.log(`1: ${userPizzaInfo.pizzas}`);
+    console.log(`2: ${totalPizzas}`);
+    if (userPizzaInfo.pizzas - totalPizzas < 0) {
+      await app.client.chat.postEphemeral({
+        token: process.env.SLACK_BOT_TOKEN,
+        user: message.user,
+        channel: message.channel,
+        blocks: [{
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `Oops, you do not have enough pizzas for this. You tried giving ${totalPizzas} pizzas but you only have ${userPizzaInfo.pizzas}!`
+          }
+        }]
+      });
+    } else {
+     // await collection.bulkWrite(ops);
+      await sendMessageToPizzaPeople(pizzapieUsersObjectArray, userSet, message);
+    }
   }
 });
 
