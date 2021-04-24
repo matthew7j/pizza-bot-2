@@ -32,6 +32,16 @@ const sendEphemeralMessage = async (app, message, text) => {
   });
 };
 
+const sendEphemeralBlock = async (app, message) => {
+  console.log(`message: ${JSON.stringify(message)}`);
+  await app.client.chat.postEphemeral({
+    token: process.env.SLACK_BOT_TOKEN,
+    user: message.user,
+    channel: message.channel,
+    blocks: message.block
+  });
+};
+
 const sendPizzaMessages = async (app, pizzaUsersObjectArray, message) => {
   let textString = '';
   const userSet = getUserSet(pizzaUsersObjectArray, message);
@@ -117,5 +127,6 @@ module.exports = {
   isUser,
   sendEphemeralMessage,
   sendPizzaMessages,
-  sendPizzaMessagesReactions
+  sendPizzaMessagesReactions,
+  sendEphemeralBlock
 };

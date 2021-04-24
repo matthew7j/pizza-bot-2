@@ -50,13 +50,18 @@ const takePizzaOp = (userId, pizzas) => {
 const performMongoOps = async ops => {
   const mongoOptions = { db: 'pizza_bot', collection: 'users' };
   const collection = await mongo(mongoOptions);
-  console.log(`ops: ${JSON.stringify(ops)}`);
   await collection.bulkWrite(ops);
 }
+
+const getMongoCollection = async () => {
+  const mongoOptions = { db: 'pizza_bot', collection: 'users' };
+  return await mongo(mongoOptions);
+};
 
 module.exports = {
     mongo,
     takePizzaOp,
     givePizzaOp,
-    performMongoOps
+    performMongoOps,
+    getMongoCollection
 };

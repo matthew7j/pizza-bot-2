@@ -18,9 +18,19 @@ app.message(/(:pizza:).*/, async ({ message }) => {
 app.event('reaction_added', async ({ event }) => {
   if (event.reaction === 'pizza') {
     pizzas.handlePizzaReaction(app, event, 1);
-  } else if (event.reaction === 'zap') { // change this to pizzapi
+  } else if (event.reaction === 'pizzapie') {
     pizzas.handlePizzaReaction(app, event, 8);
   }
+});
+
+app.command('/pizzas', async ({ command, ack }) => {
+  await ack();
+  await pizzas.handlePizzasCommand(app, command);
+});
+
+app.command('/leaderboard', async ({ command, ack }) => {
+  await ack();
+  await pizzas.handlePizzaLeaderBoardCommand(app, command);
 });
 
 (async () => {
