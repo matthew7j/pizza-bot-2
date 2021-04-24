@@ -10,9 +10,9 @@ const app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET
 });
 
-app.message(/(:pizza:).*/, async ({ message }) => {
+app.message(/(:pizza:)|(:pizzapie:).*/, async ({ message }) => {
   message.text = spaceMessage(message.text);
-  pizzas.handlePizzaMessage(app, message, ['pizza', 'pizzapie', 'bee']);
+  pizzas.handlePizzaMessage(app, message);
 });
 
 app.event('reaction_added', async ({ event }) => {
