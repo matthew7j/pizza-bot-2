@@ -43,18 +43,17 @@ const sendPizzaMessages = async (app, pizzaUsersObjectArray, message) => {
     const obj = pizzaUsersObjectArray[i];
     for (let i = 0; i < obj.recipients.length; i++) {
       if (i === obj.recipients.length - 1) {
-        nameString = obj.recipients.length === 1 ? nameString.concat(`${userNameMap.get(obj.recipients[i])}!`) : nameString.concat(`and ${userNameMap.get(obj.recipients[i])}!`);
+        nameString = obj.recipients.length === 1 ? nameString.concat(`${userNameMap.get(obj.recipients[i])}`) : nameString.concat(`and ${userNameMap.get(obj.recipients[i])}`);
       } else {
         nameString = obj.recipients.length === 2 ? nameString.concat(`${userNameMap.get(obj.recipients[i])} `) : nameString.concat(`${userNameMap.get(obj.recipients[i])}, `);
       }
-
       await sendMessageToPizzaReciever(app, message.user, obj.pizzas, obj.recipients[i], message.channel, userNameMap, channelMemberList);
     }
 
-    textString = obj.pizzas === 1 ? textString.concat(`You gave ${obj.pizzas} pizza to ${nameString}\n`) : textString.concat(`You gave ${obj.pizzas} pizzas to ${nameString}\n`);
+    textString = obj.pizzas === 1 ? textString.concat(`You gave ${obj.pizzas} pizza to ${nameString}. `) : textString.concat(`You gave ${obj.pizzas} pizzas to ${nameString}. `);
   }
 
-  await sendEphemeralMessage(app, message, textString);
+  await sendEphemeralMessage(app, message, textString.substring(0, textString.length - 1));
 };
 
 const sendMessageToPizzaReciever = async (app, pizzaGiver, numPizzas, user, channel, userNameMap, channelMemberList) => {
@@ -62,20 +61,19 @@ const sendMessageToPizzaReciever = async (app, pizzaGiver, numPizzas, user, chan
   if (numPizzas === 1) {
     msg = `You received ${numPizzas} pizza from ${userNameMap.get(pizzaGiver)}.`
   } else {
-    msg = `You received ${numPizzas} pizzas from ${userNameMap.get(pizzaGiver)}!`
+    msg = `You received ${numPizzas} pizzas from ${userNameMap.get(pizzaGiver)}.`
   }
-
   if (channelMemberList.members.includes(user)) {
     await sendEphemeralMessage(app, { user, channel }, msg);
   } else {
-    console.log(`${userNameMap.get(user)} is not in this channel, not sending a message`);
+    await sendEphemeralMessage(app, { user: pizzaGiver, channel }, `${userNameMap.get(user)} is not in this channel, not sending a message to them. :sad:`);
   } 
 };
 
 const getUserSet = (pizzaUsersObjectArray, message) => {
   const userSet = new Set();
   userSet.add(message.user);
-
+  
   pizzaUsersObjectArray.forEach(pizzaUserObj => {
     pizzaUserObj.recipients.forEach(recipient => {
       userSet.add(recipient);
@@ -96,11 +94,11 @@ const sendPizzaMessagesReactions = async (app, reactionUser, messageUser, channe
   let messageToReactor = '';
 
   if (numPizzas > 1) {
-    messageToReceiver = `You received ${numPizzas} pizzas from ${userNameMap.get(reactionUser)}!`;
-    messageToReactor = `You gave ${numPizzas} pizzas to ${userNameMap.get(messageUser)}!`;
+    messageToReceiver = `You received ${numPizzas} pizzas from ${userNameMap.get(reactionUser)}.`;
+    messageToReactor = `You gave ${numPizzas} pizzas to ${userNameMap.get(messageUser)}.`;
   } else {
-    messageToReceiver = `You received ${numPizzas} pizza from ${userNameMap.get(reactionUser)}!`;
-    messageToReactor = `You gave ${numPizzas} pizza to ${userNameMap.get(messageUser)}!`;
+    messageToReceiver = `You received ${numPizzas} pizza from ${userNameMap.get(reactionUser)}.`;
+    messageToReactor = `You gave ${numPizzas} pizza to ${userNameMap.get(messageUser)}.`;
   }
 
   await sendEphemeralMessage(app, { user: messageUser, channel }, messageToReceiver);
