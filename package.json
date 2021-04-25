@@ -6,7 +6,7 @@
   "scripts": {
     "ngrok": "ngrok http 3000",
     "start": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test"
   },
   "repository": {
     "type": "git",
@@ -18,5 +18,11 @@
     "@slack/bolt": "^2.3.0",
     "dotenv": "^8.2.0",
     "mongodb": "^3.6.6"
+  },
+  "devDependencies": {
+    "chai": "^4.3.4",
+    "mocha": "^8.3.2",
+    "sinon": "^10.0.0",
+    "sinon-chai": "^3.6.0"
   }
 }

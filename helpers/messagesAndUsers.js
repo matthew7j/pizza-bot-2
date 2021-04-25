@@ -1,20 +1,6 @@
-const getUserIdsFromText = message => {
-  const usersMatch = message.text.match(/((?<=@).+?(?=\>))/ig);
-    
-  if (!usersMatch) return {};
-
-  return usersMatch.reduce((out, input) => {
-    if(out[input]) {
-      out[input] += 1;
-    } else {
-      out[input] = 1;
-    }
-    return out;
-  }, {});
-};
-
 const isUser = msg => {
-  return msg.match(/((?<=@).+?(?=\>))/ig);
+  if (typeof msg !== 'string') return false;
+  return !!msg.match(/((?<=@).+?(?=\>))/ig);
 }
 
 const sendEphemeralMessage = async (app, message, text) => {
@@ -33,7 +19,6 @@ const sendEphemeralMessage = async (app, message, text) => {
 };
 
 const sendEphemeralBlock = async (app, message) => {
-  console.log(`message: ${JSON.stringify(message)}`);
   await app.client.chat.postEphemeral({
     token: process.env.SLACK_BOT_TOKEN,
     user: message.user,
@@ -123,7 +108,6 @@ const sendPizzaMessagesReactions = async (app, reactionUser, messageUser, channe
 }  
 
 module.exports = {
-  getUserIdsFromText,
   isUser,
   sendEphemeralMessage,
   sendPizzaMessages,
