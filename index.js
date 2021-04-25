@@ -1,45 +1,62 @@
 const { App } = require('@slack/bolt');
 
-// Initializes your app with your bot token and signing secret
+const { mongo } = require('./helpers/mongo');
+const { spaceMessage } = require('./helpers/spaceMessage');
+const pizzas = require('./lib/pizzas');
+require('dotenv').config();
+
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
   signingSecret: process.env.SLACK_SIGNING_SECRET
 });
 
-// Listens to incoming messages that contain "hello"
-app.message('hello', async ({ message, say }) => {
-  // say() sends a message to the channel where the event was triggered
-  await say({
-    blocks: [
-      {
-        "type": "section",
-        "text": {
-          "type": "mrkdwn",
-          "text": `Hey there <@${message.user}>!`
-        },
-        "accessory": {
-          "type": "button",
-          "text": {
-            "type": "plain_text",
-            "text": "Click Me"
-          },
-          "action_id": "button_click"
-        }
-      }
-    ],
-    text: `Hey there <@${message.user}>!`
-  });
+app.message(/(:pizza:)|(:pizzapie:).*/, async ({ message }) => {
+  message.text = spaceMessage(message.text);
+  pizzas.handlePizzaMessage(app, message);
 });
 
-app.action('button_click', async ({ body, ack, say }) => {
-  // Acknowledge the action
+app.event('reaction_added', async ({ event }) => {
+  if (event.reaction === 'pizza') {
+    pizzas.handlePizzaReaction(app, event, 1);
+  } else if (event.reaction === 'pizzapie') {
+    pizzas.handlePizzaReaction(app, event, 8);
+  }
+});
+
+app.command('/pizzas', async ({ command, ack }) => {
   await ack();
-  await say(`<@${body.user.id}> clicked the button`);
+  await pizzas.handlePizzasCommand(app, command);
+});
+
+app.command('/leaderboard', async ({ command, ack }) => {
+  await ack();
+  await pizzas.handlePizzaLeaderBoardCommand(app, command);
 });
 
 (async () => {
-  // Start your app
   await app.start(process.env.PORT || 3000);
+  console.log('Pizza Bot is running!');
+  const mongoOptions = { db: 'pizza_bot', collection: 'users' };
+  const collection = await mongo(mongoOptions);
+  const ops = [];
 
-  console.log('⚡️ Bolt app is running!');
+  const userList = await app.client.users.list({ token: process.env.SLACK_BOT_TOKEN });
+
+  userList.members.forEach(user => {
+    if (user.name !== 'slackbot' && !user.is_bot) {
+      ops.push({
+        updateOne: {
+          filter: {
+              userId: user.id
+          },
+          update: {
+              $setOnInsert: { pizzas : 8, name: user.real_name }
+          },
+          upsert: true
+        }
+      });
+    }
+  });
+
+  await collection.bulkWrite(ops, { ordered: false });
 })();
